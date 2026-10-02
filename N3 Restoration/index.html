@@ -1,0 +1,398 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>N3 Restoration</title>
+<meta name="description" content="A 1996 Director movie recovered frame-by-frame from a dead file format, and set to loop the way it was meant to play.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0b0906;
+    --surface: #16120d;
+    --surface-2: #1f1912;
+    --bezel: #0e0b08;
+    --text: #efe6d4;
+    --text-dim: #a0937c;
+    --text-faint: #6b5f4c;
+    --accent: #d9ad5c;
+    --accent-soft: #8a6b34;
+    --accent-glow: rgba(217, 173, 92, 0.35);
+    --border: #362c1e;
+    --ok: #7fae6e;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ color-scheme: dark; }
+  }
+  :root[data-theme="dark"]{ color-scheme: dark; }
+
+  *{ box-sizing: border-box; }
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    padding-inline: 20px;
+    padding-block: 48px;
+    display: flex;
+    justify-content: center;
+  }
+  ::selection{ background: var(--accent-soft); color: #1a1409; }
+
+  .page{ width: 100%; max-width: 720px; }
+
+  .masthead{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 22px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .masthead-id{
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .masthead-id b{ color: var(--text-dim); font-weight: 600; }
+  .masthead-status{
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dot{
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-faint);
+  }
+  .dot.live{ background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+
+  h1{
+    font-family: "Oswald", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    font-size: clamp(28px, 6vw, 40px);
+    line-height: 1.05;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  .tagline{
+    font-size: 13px;
+    color: var(--text-dim);
+    max-width: 46em;
+    line-height: 1.6;
+    margin: 0 0 28px;
+  }
+  .tagline em{
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  /* --- stage --- */
+  .stage-frame{
+    background: var(--bezel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 18px 44px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.02);
+  }
+  .stage{
+    position: relative;
+    width: 100%;
+    aspect-ratio: 320 / 240;
+    background: #000;
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.6);
+  }
+  .stage img{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    filter: saturate(1.08) contrast(1.03);
+  }
+  .stage-glow{
+    position: absolute;
+    inset: -20%;
+    background: radial-gradient(circle at 50% 55%, var(--accent-glow), transparent 60%);
+    opacity: 0;
+    transition: opacity 1.4s ease;
+    pointer-events: none;
+    mix-blend-mode: screen;
+  }
+  .stage-glow.on{ opacity: 1; }
+  .scanlines{
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 1px,
+      rgba(0,0,0,.16) 2px,
+      rgba(0,0,0,0) 3px
+    );
+    mix-blend-mode: multiply;
+    opacity: .55;
+  }
+  .vignette{
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 46px 14px rgba(0,0,0,.55);
+  }
+
+  .transport{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 4px 2px;
+    flex-wrap: wrap;
+  }
+  .play-btn{
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #17120a;
+    background: var(--accent);
+    border: none;
+    border-radius: 5px;
+    padding: 10px 16px;
+    cursor: pointer;
+  }
+  .play-btn:hover{ filter: brightness(1.08); }
+  .play-btn:active{ transform: translateY(1px); }
+  .play-btn:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+  .play-btn svg{ width: 11px; height: 11px; flex: none; }
+
+  .scrubtext{
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: .04em;
+    flex: 1 1 auto;
+    min-width: 160px;
+  }
+  .scrubtext b{ color: var(--text-dim); font-weight: 600; }
+
+  .mute-btn{
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 9px 12px;
+    cursor: pointer;
+  }
+  .mute-btn:hover{ border-color: var(--accent-soft); color: var(--text); }
+  .mute-btn:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* --- placard --- */
+  .placard{
+    margin-top: 22px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+  .placard-row{
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 4px 16px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .placard-row:last-child{ border-bottom: none; }
+  .placard-key{
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    font-size: 10.5px;
+    padding-top: 2px;
+  }
+  .placard-val{ color: var(--text); line-height: 1.55; }
+  .placard-val .accent{ color: var(--accent); }
+
+  @media (max-width: 460px){
+    .placard-row{ grid-template-columns: 1fr; gap: 4px; }
+  }
+
+  .colophon{
+    margin-top: 18px;
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text-faint);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .stage-glow{ transition: none; }
+  }
+</style>
+
+<div class="page">
+
+  <div class="masthead">
+    <div class="masthead-id">SPECIMEN <b>N3_2.DIR</b> &middot; MACROMEDIA DIRECTOR 6.0 &middot; CA. 1996</div>
+    <div class="masthead-status"><span class="dot" id="statusDot"></span><span id="statusText">awaiting playback</span></div>
+  </div>
+
+  <h1>N3 Restoration</h1>
+  <p class="tagline">This intro movie hasn't run since Shockwave died. <em>102 bitmap frames</em> were pulled back out of its RIFX container byte by byte, decompressed, repainted through their original palette, and set here to fade in once, then loop from the point the shimmer starts repeating &mdash; same as it would have, sitting idle on someone's desktop.</p>
+
+  <div class="stage-frame">
+    <div class="stage" id="stage">
+      <img id="frameImg" src="frames/img0001.png" alt="Restored N3 logo animation, frame 1 of 102" draggable="false">
+      <div class="stage-glow" id="glow"></div>
+      <div class="scanlines"></div>
+      <div class="vignette"></div>
+    </div>
+    <div class="transport">
+      <button class="play-btn" id="playBtn" type="button">
+        <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2 1.2v9.6c0 .6.66.97 1.18.66l7.7-4.8a.77.77 0 0 0 0-1.32l-7.7-4.8A.77.77 0 0 0 2 1.2z"/></svg>
+        <span id="playBtnLabel">Play</span>
+      </button>
+      <div class="scrubtext" id="scrubText">frame <b>1</b> / 102 &middot; fading in</div>
+      <button class="mute-btn" id="muteBtn" type="button" aria-pressed="false">Sound: on</button>
+    </div>
+  </div>
+
+  <div class="placard">
+    <div class="placard-row">
+      <div class="placard-key">Source</div>
+      <div class="placard-val">N3_2.dir &middot; RIFX container, little-endian &middot; 2,072,428 bytes</div>
+    </div>
+    <div class="placard-row">
+      <div class="placard-key">Image</div>
+      <div class="placard-val">320&times;240 &middot; 8-bit indexed colour &middot; PackBits-style RLE (<span class="accent">BITD</span>) &middot; palette resolved via the movie's own <span class="accent">CAS_</span> cast table</div>
+    </div>
+    <div class="placard-row">
+      <div class="placard-key">Audio</div>
+      <div class="placard-val">"Radio Tune" &middot; 16-bit PCM, mono, 22050&nbsp;Hz &middot; Moa sound header (<span class="accent">sndH</span>/<span class="accent">sndS</span>), no compression</div>
+    </div>
+    <div class="placard-row">
+      <div class="placard-key">Loop point</div>
+      <div class="placard-val">Frame <span class="accent">76</span> and frame <span class="accent">102</span> are byte-for-byte identical bitmaps &mdash; the source movie's own animation repeats on an exact 26-frame cycle, confirmed by diffing every recovered frame against every other. The full capture plays once, then settles into that exact cycle. The tune restarts from its own top; the score gave it no internal loop markers to honour instead.</div>
+    </div>
+  </div>
+
+  <p class="colophon">Frame timing is a reconstruction &mdash; the original tempo channel wasn't recovered, so playback runs at a flat 8&nbsp;fps. Everything else, down to the palette lookup, is read straight from the file.</p>
+
+</div>
+
+<script>
+(function(){
+  var FRAME_COUNT = 102;
+  var FRAME_MS = 125;
+  var LOOP_START = 75;  // 0-indexed: frames/img0076.png
+  var LOOP_END = 100;   // 0-indexed: frames/img0101.png (img0102 is byte-identical to img0076, so we cut here)
+
+  function frameSrc(i){
+    var n = String(i + 1).padStart(4, '0');
+    return 'frames/img' + n + '.png';
+  }
+
+  var img = document.getElementById('frameImg');
+  var glow = document.getElementById('glow');
+  var playBtn = document.getElementById('playBtn');
+  var playBtnLabel = document.getElementById('playBtnLabel');
+  var muteBtn = document.getElementById('muteBtn');
+  var scrubText = document.getElementById('scrubText');
+  var statusDot = document.getElementById('statusDot');
+  var statusText = document.getElementById('statusText');
+
+  var audio = new Audio('tune.mp3');
+  audio.loop = true;
+  audio.preload = 'auto';
+  var muted = false;
+
+  // preload frames
+  var cache = [];
+  for (var i = 0; i < FRAME_COUNT; i++) {
+    var im = new Image();
+    im.src = frameSrc(i);
+    cache.push(im);
+  }
+
+  var playing = false;
+  var hasStartedOnce = false;
+  var frameIndex = 0;
+  var timer = null;
+
+  function render(){
+    img.src = frameSrc(frameIndex);
+    var phase = (frameIndex < LOOP_START && !hasStartedOnce) ? 'fading in' :
+                (frameIndex < LOOP_START) ? 'first pass' : 'looping';
+    scrubText.innerHTML = 'frame <b>' + (frameIndex + 1) + '</b> / ' + FRAME_COUNT + ' &middot; ' + phase;
+    glow.classList.toggle('on', frameIndex >= 18);
+  }
+
+  function tick(){
+    if (!playing) return;
+    if (frameIndex >= FRAME_COUNT - 1) {
+      hasStartedOnce = true;
+      frameIndex = LOOP_START;
+    } else if (hasStartedOnce && frameIndex >= LOOP_END) {
+      frameIndex = LOOP_START;
+    } else {
+      frameIndex++;
+    }
+    render();
+    timer = setTimeout(tick, FRAME_MS);
+  }
+
+  function start(){
+    if (playing) return;
+    playing = true;
+    playBtnLabel.textContent = 'Pause';
+    statusDot.classList.add('live');
+    statusText.textContent = 'playing';
+    if (!muted) {
+      audio.currentTime = hasStartedOnce ? audio.currentTime : 0;
+      audio.play().catch(function(){ /* ignore: needs a gesture, this is one */ });
+    }
+    timer = setTimeout(tick, FRAME_MS);
+  }
+
+  function pause(){
+    playing = false;
+    playBtnLabel.textContent = 'Play';
+    statusDot.classList.remove('live');
+    statusText.textContent = 'paused';
+    if (timer) clearTimeout(timer);
+    audio.pause();
+  }
+
+  playBtn.addEventListener('click', function(){
+    if (playing) pause(); else start();
+  });
+
+  muteBtn.addEventListener('click', function(){
+    muted = !muted;
+    muteBtn.textContent = 'Sound: ' + (muted ? 'off' : 'on');
+    muteBtn.setAttribute('aria-pressed', String(muted));
+    if (muted) {
+      audio.pause();
+    } else if (playing) {
+      audio.play().catch(function(){});
+    }
+  });
+
+  render();
+})();
+</script>
+
+</body></html>
